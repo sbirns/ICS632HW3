@@ -6,24 +6,10 @@
 
 int main(int argc, char **argv) {
     int i,j,k;
-    int parallel_i = 0, parallel_k = 0, parallel_j = 0, check = 0;
-
-    #ifdef PARALLEL_I
-        parallel_i = 1;
-    #elif PARALLEL_K
-        parallel_k = 1;
-    #elif PARALLEL_J
-        parallel_j = 1;
-    #endif
-
-    #ifdef CHECK
-        printf("Checking enabled..\n");
-        check = 1;
-    #endif
 
     // Parse comand-line arguments
     if (argc != 3) {
-        fprintf(stderr,"Usage: %s <array size> <number of threads>\n", argv[0]);
+        fprintf(stderr,"Usage: %s <array size> <num threads>\n", argv[0]);
         exit(1);
     }
 
@@ -44,9 +30,10 @@ int main(int argc, char **argv) {
     int *B = (int *)malloc(N * N * sizeof(int));
     int *C = (int *)calloc(N * N, sizeof(int));
     int *sequential_C;
-    if (check == 1) {
+    #ifdef CHECK
         sequential_C = (int *)calloc(N * N, sizeof(int));
-    }
+    #endif
+
     for (i=0; i < N*N; i++) {
         A[i] = rand() % 1024;
         B[i] = rand() % 1024;
@@ -57,7 +44,7 @@ int main(int argc, char **argv) {
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
 
-    if (parallel_i == 1) {
+    #ifdef PARALLEL_I
         #pragma omp parallel for private(j,k) shared(A,B,C)
         for (i=0; i < N; i++) {            
             for (k=0; k < N; k++) {                
@@ -67,7 +54,8 @@ int main(int argc, char **argv) {
             }
         }
         
-        if (check == 1) {
+        #ifdef CHECK
+            printf("Checking enabled..\n");
             for (i=0; i < N; i++) {
                 for (k=0; k < N; k++) {
                     for (j=0; j < N; j++) {
@@ -86,9 +74,9 @@ int main(int argc, char **argv) {
                     }
                 }
             }                        
-        }
-    } 
-    else if (parallel_k == 1) {
+        #endif
+
+    #elif PARALLEL_K
         for (i=0; i < N; i++) {  
             #pragma omp parallel for private(j) shared(A,B,C)      
             for (k=0; k < N; k++) {                
@@ -99,7 +87,8 @@ int main(int argc, char **argv) {
             }
         }
         
-        if (check == 1) {
+        #ifdef CHECK
+            printf("Checking enabled..\n");
             for (i=0; i < N; i++) {
                 for (k=0; k < N; k++) {
                     for (j=0; j < N; j++) {
@@ -112,15 +101,15 @@ int main(int argc, char **argv) {
                 for (k=0; k < N; k++) {
                     for (j=0; j < N; j++) {
                         if (sequential_C[i*N + j] != C[i*N + j]) {
-                            fprintf(stderr,"Parallel computation incorrect.\n");
+                            fprintf(stderr,"Parallel computation incorrect\n");
                             exit(1);
                         }
                     }
                 }
             }                        
-        }        
-    }
-    else if (parallel_j == 1) {
+        #endif
+
+    #elif PARALLEL_J
         for (i=0; i < N; i++) {            
             for (k=0; k < N; k++) {      
                 #pragma omp parallel for shared(A,B,C)          
@@ -130,7 +119,8 @@ int main(int argc, char **argv) {
             }
         }
         
-        if (check == 1) {
+        #ifdef CHECK
+            printf("Checking enabled..\n");
             for (i=0; i < N; i++) {
                 for (k=0; k < N; k++) {
                     for (j=0; j < N; j++) {
@@ -143,15 +133,15 @@ int main(int argc, char **argv) {
                 for (k=0; k < N; k++) {
                     for (j=0; j < N; j++) {
                         if (sequential_C[i*N + j] != C[i*N + j]) {
-                            fprintf(stderr,"Parallel computation incorrect.\n");
+                            fprintf(stderr,"Parallel computation incorrect\n");
                             exit(1);
                         }
                     }
                 }
             }                        
-        }
-    }
+        #endif
 
+    #endif
     gettimeofday(&end, NULL);
 
     double elapsed = (1.0E+6 * (end.tv_sec - begin.tv_sec) + end.tv_usec -  begin.tv_usec) / 1.0E+6;
