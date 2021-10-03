@@ -1,15 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=serial_job_test    # Job name
-#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
-#SBATCH --mail-user=email@ufl.edu     # Where to send mail	
-#SBATCH --ntasks=1                    # Run on a single CPU
-#SBATCH --mem=10gb                    # Job memory request
-#SBATCH --time=00:15:00               # Time limit hrs:min:sec
-#SBATCH --output=serial_test_%j.log   # Standard output and error log
-pwd; hostname; date
+#SBATCH --job-name=example
+#SBATCH --partition=sandbox
+## 3 day max run time for public partitions, except 4 hour max runtime for the sandbox partition
+#SBATCH --time=0-01:00:00 ## time format is DD-HH:MM:SS
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=6400 ## max amount of memory per node you require
 
-module load python
-
-python q3.py
-
-date
+for i in {1..10}
+do
+	./$1 $2 $3
+done
